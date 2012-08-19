@@ -2,7 +2,9 @@ package WWW::ASN;
 use Moo;
 extends 'WWW::ASN::Base';
 
+use WWW::ASN::Jurisdiction;
 use File::Slurp qw(read_file write_file);
+use XML::Twig;
 
 
 =head1 NAME
@@ -61,8 +63,43 @@ sub jurisdictions {
         }
     }
 
-    ...;
-    return [];
+    my @rv = ();
+    my $handle_jurisdiction = sub {
+        my ($twig, $jur) = @_;
+
+        my %jur_params = ();
+        for my $info ($jur->children) {
+            my $tag = $info->tag;
+            next if $tag eq 'DocumentCount';
+
+            my $val = $info->text;
+
+            # tags should be organizationName, organizationAlias, ...
+            $tag =~ s/^organization//;
+            $tag = lc $tag;
+            if ($tag eq 'name') {
+                $jur_params{name} = $val;
+            } elsif ($tag eq 'alias') {
+                $jur_params{id} = $val;
+            } elsif ($tag eq 'jurisdiction') {
+                $jur_params{abbreviation} = $val;
+            } elsif ($tag eq 'class') {
+                $jur_params{type} = $val;
+            } else {
+                warn "Unknown tag in Jurisdiction: " . $info->tag;
+            }
+        }
+        push @rv, WWW::ASN::Jurisdiction->new(%jur_params);
+    };
+
+    my $twig = XML::Twig->new(
+        twig_handlers => {
+            Jurisdiction => $handle_jurisdiction,
+        },
+    );
+    $twig->parse($jurisdictions_xml);
+
+    return \@rv;
 }
 
 =head1 AUTHOR

@@ -18,6 +18,13 @@ my $asn = new_ok 'WWW::ASN' => [ jurisdictions_cache => $xml_file ];
 
 my $jurisdictions = $asn->jurisdictions;
 ok(-e $xml_file, "$xml_file was created");
-is_deeply($jurisdictions, [], 'jurisdictions() returned...');
+
+isa_ok($jurisdictions->[0], 'WWW::ASN::Jurisdiction');
+
+my @wyoming = grep { $_->id eq 'http://purl.org/ASN/scheme/ASNJurisdiction/WY' } @$jurisdictions;
+ok(@wyoming, "found wyoming");
+is($wyoming[0]->abbreviation, 'WY', 'abbreviation');
+like($wyoming[0]->name, qr/Wyoming/, 'name');
+like($wyoming[0]->type, qr/State/i, 'type');
 
 done_testing;
