@@ -25,7 +25,23 @@ has jurisdictions_cache => (
     ...
 
 
+=head1 ATTRIBUTES
+
+=head2 jurisdictions_cache
+
+Optional.  The name of a file containing the XML data from
+http://asn.jesandco.org/api/1/jurisdictions
+
+If the file does not exist, it will be created.
+
+Leave this option undefined to force retrieval 
+each time L</jurisdictions> is called.
+
 =head1 METHODS
+
+=head2 jurisdictions
+
+...
 
 =cut
 
@@ -45,6 +61,7 @@ sub jurisdictions {
         }
     }
 
+    ...;
     return [];
 }
 
