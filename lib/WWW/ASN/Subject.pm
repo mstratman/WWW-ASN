@@ -1,4 +1,4 @@
-package WWW::ASN::Jurisdiction;
+package WWW::ASN::Subject;
 use Moo;
 
 has 'id' => (
@@ -9,17 +9,9 @@ has 'name' => (
     is       => 'ro',
     required => 0,
 );
-has 'type' => (
-    is       => 'ro',
-    required => 0,
-);
-has 'abbreviation' => (
-    is       => 'ro',
-    required => 1,
-);
 
 # This is arguably bad to trust, because the
-# jurisdiction data might be cached and old.
+# subject data might be cached and old.
 has 'document_count' => (
     is       => 'ro',
     required => 0,
@@ -27,17 +19,15 @@ has 'document_count' => (
 
 =head1 NAME
 
-WWW::ASN::Jurisdiction - Represents a state, organization, or other entity that publishes standards
+WWW::ASN::Subject - Represents an academic subject
 
 =head1 SYNOPSIS
 
     use WWW::ASN;
 
     my $asn = WWW::ASN->new();
-    for my $jurisdiction ($asn->jurisdictions) {
-        say $jurisdiction->name,
-            " ( ", $jurisdiction->abbreviation, ")",
-            " Type: ", $jurisdiction->type,
+    for my $subject ($asn->subjects) {
+        say $subject->name,
             " id: ", $jurisdiction->id;
     }
 
@@ -46,23 +36,13 @@ WWW::ASN::Jurisdiction - Represents a state, organization, or other entity that 
 
 =head2 name
 
-The name of the jurisdiction.  This is typically the state or organization name.
+The name of the subject.
 
-e.g. "Alabama", "Common Core State Standards"
-
-=head2 abbreviation
-
-An abbreviation for the jurisdiction.
-
-e.g. "AL", "CCSS"
-
-=head2 type
-
-e.g. "U.S. States and Territories", "Organization", "Country"
+e.g. 'Mathematics'
 
 =head2 id
 
-This is a globally unique URI for this jurisdiction.
+This is a globally unique URI for this subject.
 
 =cut
 

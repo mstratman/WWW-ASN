@@ -2,9 +2,11 @@ package WWW::ASN;
 use Moo;
 extends 'WWW::ASN::Base';
 
-use WWW::ASN::Jurisdiction;
 use File::Slurp qw(read_file write_file);
 use XML::Twig;
+
+use WWW::ASN::Jurisdiction;
+use WWW::ASN::Subject;
 
 
 =head1 NAME
@@ -19,12 +21,34 @@ has jurisdictions_cache => (
     is => 'ro',
 );
 
+has subjects_cache => (
+    is => 'ro',
+);
+
 =head1 SYNOPSIS
 
     use WWW::ASN;
 
     my $asn = WWW::ASN->new();
     ...
+
+
+=head1 DESCRIPTION
+
+...TODO...
+
+Learning objectives documents are gotten from a
+L<WWW::ASN::Jurisdiction>.  There is no way to 
+directly request all documents for all jurisdictions.
+
+You can, however, easily  loop through each jurisdiction
+to get them:
+
+    foreach my $jurisdiction (@{ $asn->jurisdictions }) {
+        foreach my $document (@{ $jurisdiction->documents }) {
+            ...;
+        }
+    }
 
 
 =head1 ATTRIBUTES
@@ -39,29 +63,31 @@ If the file does not exist, it will be created.
 Leave this option undefined to force retrieval 
 each time L</jurisdictions> is called.
 
+=head2 subjects_cache
+
+Optional.  The name of a file containing the XML data from
+http://asn.jesandco.org/api/1/subjects
+
+If the file does not exist, it will be created.
+
+Leave this option undefined to force retrieval 
+each time L</subjects> is called.
+
 =head1 METHODS
 
 =head2 jurisdictions
 
-...
+Returns an array reference of L<WWW::ASN::Jurisdiction> objects.
 
 =cut
 
 sub jurisdictions {
     my $self = shift;
 
-    my $jurisdictions_xml;
-    if ($self->jurisdictions_cache && -e $self->jurisdictions_cache) {
-        $jurisdictions_xml = read_file($self->jurisdictions_cache);
-    }
-
-    unless ($jurisdictions_xml) {
-        $jurisdictions_xml = $self->get_url('http://asn.jesandco.org/api/1/jurisdictions');
-
-        if ($self->jurisdictions_cache) {
-            write_file($self->jurisdictions_cache, $jurisdictions_xml);
-        }
-    }
+    my $jurisdictions_xml = $self->_read_or_download(
+        $self->jurisdictions_cache, 
+        'http://asn.jesandco.org/api/1/jurisdictions',
+    );
 
     my @rv = ();
     my $handle_jurisdiction = sub {
@@ -70,13 +96,14 @@ sub jurisdictions {
         my %jur_params = ();
         for my $info ($jur->children) {
             my $tag = $info->tag;
-            next if $tag eq 'DocumentCount';
 
             my $val = $info->text;
 
             # tags should be organizationName, organizationAlias, ...
+            # with 'DocumentCount' being the exception
             $tag =~ s/^organization//;
             $tag = lc $tag;
+
             if ($tag eq 'name') {
                 $jur_params{name} = $val;
             } elsif ($tag eq 'alias') {
@@ -85,6 +112,8 @@ sub jurisdictions {
                 $jur_params{abbreviation} = $val;
             } elsif ($tag eq 'class') {
                 $jur_params{type} = $val;
+            } elsif ($tag eq 'documentcount') {
+                $jur_params{document_count} = $val;
             } else {
                 warn "Unknown tag in Jurisdiction: " . $info->tag;
             }
@@ -94,12 +123,67 @@ sub jurisdictions {
 
     my $twig = XML::Twig->new(
         twig_handlers => {
-            Jurisdiction => $handle_jurisdiction,
+            '/asnJurisdictions/Jurisdiction' => $handle_jurisdiction,
         },
     );
     $twig->parse($jurisdictions_xml);
 
     return \@rv;
+}
+
+=head2 subjects
+
+Returns an array reference of L<WWW::ASN::Subject> objects.
+
+=cut
+
+sub subjects {
+    my $self = shift;
+
+    my $subjects_xml = $self->_read_or_download(
+        $self->subjects_cache, 
+        'http://asn.jesandco.org/api/1/subjects',
+    );
+
+    my @rv = ();
+    my $handle_subject = sub {
+        my ($twig, $subject) = @_;
+
+        push @rv, WWW::ASN::Subject->new(
+            id             => $subject->first_child('SubjectIdentifier')->text,
+            name           => $subject->first_child('Subject')->text,
+            document_count => $subject->first_child('DocumentCount')->text,
+        );
+    };
+
+    my $twig = XML::Twig->new(
+        twig_handlers => {
+            '/asnSubjects/Subject' => $handle_subject,
+        },
+    );
+    $twig->parse($subjects_xml);
+
+    return \@rv;
+}
+
+sub _read_or_download {
+    my ($self, $cache_file, $url) = @_;
+
+    my $content;
+
+    if (defined $cache_file && -e $cache_file) {
+        $content = read_file($cache_file);
+    }
+
+    unless (defined $content && length $content) {
+        $content = $self->get_url($url);
+
+        if (defined $cache_file) {
+            write_file($cache_file, $content);
+        }
+    }
+
+    return $content;
 }
 
 =head1 AUTHOR
