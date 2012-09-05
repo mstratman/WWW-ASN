@@ -1,6 +1,12 @@
 package WWW::ASN::Jurisdiction;
+use strict;
+use warnings;
 use Moo;
+extends 'WWW::ASN::Base';
+
 use URI;
+use XML::Twig;
+use WWW::ASN::Document;
 
 has 'id' => (
     is       => 'ro',
@@ -128,17 +134,61 @@ sub documents {
     my $opt = shift || {};
 
     my $uri = URI->new('http://asn.jesandco.org/api/1/documents');
-    my $params = {};
+    my $params = {
+        jurisdiction => $self->abbreviation,
+    };
     for (qw(subject subjectURI status statusURI)) {
         $params->{$_} = $opt->{$_} if defined $opt->{$_};
     }
     $uri->query_form($params);
-    my $jurisdictions_xml = $self->_read_or_download(
+    my $documents_xml = $self->_read_or_download(
         $opt->{cache_file},
         $uri,
     );
 
-    #TODO:...
+    my @rv = ();
+    my $handle_document = sub {
+        my ($twig, $doc) = @_;
+
+        my $id;
+        my @ids = $doc->children('DocumentID');
+        for (@ids) {
+            if ($_->att('type') && $_->att('type') eq 'asnUri') {
+                $id = $_->text;
+                last;
+            }
+        }
+        unless ($id) {
+            warn "No asnUri DocumentID found in Document element";
+            return;
+        }
+
+        my @titles = ();
+        for ($doc->children('DocumentTitle')) {
+            my $lang = $_->att('xml:lang');
+            my $title = $_->text;
+            push @titles, { language => $lang, title => $title };
+        }
+
+        push @rv, WWW::ASN::Document->new(
+            id             => $id,
+            titles         => \@titles,
+            subject_names  => [ map { $_->text } $doc->children('DocumentSubject') ],
+            uri            => $id,
+            jurisdiction_abbreviation => $doc->first_child('DocumentJurisdiction')->text,
+            adoption_date             => $doc->first_child('LocalAdoptionDate')->text,
+        );
+    };
+
+    my $twig = XML::Twig->new(
+        twig_handlers => {
+            '/asnDocuments/Document' => $handle_document,
+        },
+    );
+    $twig->parse($documents_xml);
+
+
+    return \@rv;
 }
 
 =head1 AUTHOR
@@ -149,6 +199,10 @@ Mark A. Stratman, C<< <stratman at gmail.com> >>
 =head1 SEE ALSO
 
 L<WWW::ASN>
+
+L<WWW::ASN::Document>
+
+L<WWW::ASN::Subject>
 
 =head1 LICENSE AND COPYRIGHT
 
