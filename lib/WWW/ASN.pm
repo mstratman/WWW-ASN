@@ -29,27 +29,26 @@ has subjects_cache => (
 
     use WWW::ASN;
 
-    my $asn = WWW::ASN->new();
-    ...
+    my $asn = WWW::ASN->new({
+        jurisdictions_cache => './jurisdictions.xml',
+    });
+    for my $jurisdiction (@{ $asn->jurisdictions }) {
+        if ($jurisdictions->name =~ /Common Core/i) {
+            my @standards_docs = $jurisdictions->documents({ status => 'published' })
+            ...
+        }
+    }
 
 
 =head1 DESCRIPTION
 
-...TODO...
+This module allows you to retrieve standards documents from
+the Achievement Standards Network (L<http://asn.jesandco.org/>).
 
-Learning objectives documents are gotten from a
-L<WWW::ASN::Jurisdiction>.  There is no way to 
-directly request all documents for all jurisdictions.
-
-You can, however, easily  loop through each jurisdiction
-to get them:
-
-    foreach my $jurisdiction (@{ $asn->jurisdictions }) {
-        foreach my $document (@{ $jurisdiction->documents }) {
-            ...;
-        }
-    }
-
+As illustrated in the L</SYNOPSIS>, you will typically first
+retrieve a L<jurisdiction|WWW::ASN::Jurisdiction> such as a state,
+or other organization that creates L<standards documents|WWW::ASN::Document>.
+From this jurisdiction you can then retrieve specific documents.
 
 =head1 ATTRIBUTES
 
@@ -190,17 +189,18 @@ sub _read_or_download {
 
 Mark A. Stratman, C<< <stratman at gmail.com> >>
 
-=head1 BUGS
+=head1 SEE ALSO
 
-Please report any bugs or feature requests to C<bug-www-asn at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=WWW-ASN>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
+L<WWW::ASN::Jurisdiction>
 
+L<WWW::ASN::Document>
+
+L<WWW::ASN::Subject>
 
 =head1 ACKNOWLEDGEMENTS
 
 This library retrieves and manipulates data from the Achievement Standards Network.
-http://asn.jesandco.org/
+L<http://asn.jesandco.org/>
 
 
 =head1 LICENSE AND COPYRIGHT
