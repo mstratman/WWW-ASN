@@ -16,6 +16,7 @@ requires 'File::Slurp' => 0;
 requires 'JSON'        => 0;
 requires 'XML::Twig'   => 0;
 requires 'LWP::Simple' => 0;
+requires 'URI'         => 0;
 
 auto_set_repository;
 auto_install;

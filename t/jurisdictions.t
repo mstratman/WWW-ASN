@@ -7,10 +7,13 @@ use FindBin qw($Bin);
 use File::Spec::Functions qw(catfile);
 
 my $xml_file = catfile($Bin, 'jurisdictions.xml');
+my $docs_file = catfile($Bin, 'jurisdiction_documents.xml');
 
 if ($ENV{ASN_USE_NET}) {
     unlink($xml_file);
+    unlink($docs_file);
     ok(! -e $xml_file, "$xml_file does not exist");
+    ok(! -e $docs_file, "$docs_file does not exist");
 }
 
 
@@ -27,5 +30,12 @@ is($wyoming[0]->abbreviation, 'WY', 'abbreviation');
 like($wyoming[0]->name, qr/Wyoming/, 'name');
 like($wyoming[0]->type, qr/State/i, 'type');
 ok($wyoming[0]->document_count > 1, 'document_count > 1');
+
+my $docs = $wyoming[0]->documents({
+    subject => 'Math stuff',
+    status => 'deprecated',
+    cache_file => $docs_file,
+});
+use Data::Dumper; diag(Dumper($docs));
 
 done_testing;
