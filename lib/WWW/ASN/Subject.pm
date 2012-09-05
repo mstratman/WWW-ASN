@@ -1,4 +1,6 @@
 package WWW::ASN::Subject;
+use strict;
+use warnings;
 use Moo;
 
 has 'id' => (
@@ -28,7 +30,7 @@ WWW::ASN::Subject - Represents an academic subject
     my $asn = WWW::ASN->new();
     for my $subject ($asn->subjects) {
         say $subject->name,
-            " id: ", $jurisdiction->id;
+            " id: ", $subject->id;
     }
 
 
