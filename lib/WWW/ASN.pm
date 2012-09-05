@@ -1,8 +1,9 @@
 package WWW::ASN;
+use strict;
+use warnings;
 use Moo;
 extends 'WWW::ASN::Base';
 
-use File::Slurp qw(read_file write_file);
 use XML::Twig;
 
 use WWW::ASN::Jurisdiction;
@@ -49,6 +50,20 @@ As illustrated in the L</SYNOPSIS>, you will typically first
 retrieve a L<jurisdiction|WWW::ASN::Jurisdiction> such as a state,
 or other organization that creates L<standards documents|WWW::ASN::Document>.
 From this jurisdiction you can then retrieve specific documents.
+
+=head2 Cache files
+
+Many of the methods in these modules allow for the use
+of cache files. The main purpose of these options is to allow
+you to be a good citizen and avoid unnecessary hits to the
+ASN website during your development and testing.
+
+Using them is very simple: Just provide a file name.  That's it!
+
+When a filename is provided it will be used
+instead of downloading the data again - unless the file doesn't
+exist, in which case the data will be downloaded and saved
+to the file.
 
 =head1 ATTRIBUTES
 
@@ -163,26 +178,6 @@ sub subjects {
     $twig->parse($subjects_xml);
 
     return \@rv;
-}
-
-sub _read_or_download {
-    my ($self, $cache_file, $url) = @_;
-
-    my $content;
-
-    if (defined $cache_file && -e $cache_file) {
-        $content = read_file($cache_file);
-    }
-
-    unless (defined $content && length $content) {
-        $content = $self->get_url($url);
-
-        if (defined $cache_file) {
-            write_file($cache_file, $content);
-        }
-    }
-
-    return $content;
 }
 
 =head1 AUTHOR
