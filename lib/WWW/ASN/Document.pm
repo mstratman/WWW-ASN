@@ -64,29 +64,50 @@ WWW::ASN::Document - Represents a collection of standards or learning objectives
 
 =cut
 
-sub uri_xml { return $_[0]->uri . '_full.xml'; }
+sub uri_manifest_json { return $_[0]->uri . '_manifest.json'; }
 
-sub uri_json { return $_[0]->uri . '_full.json'; }
+sub uri_full_xml { return $_[0]->uri . '_full.xml'; }
 
-sub uri_turtle { return $_[0]->uri . '_full.ttl'; }
+sub uri_full_json { return $_[0]->uri . '_full.json'; }
 
-sub uri_notation3 { return $_[0]->uri . '_full.n3'; }
+sub uri_full_turtle { return $_[0]->uri . '_full.ttl'; }
 
-sub contents_json {
+sub uri_full_notation3 { return $_[0]->uri . '_full.n3'; }
+
+sub contents_full_json {
     my $self = shift;
     my $opt = shift || {};
 
     return $self->_read_or_download(
         $opt->{cache_file},
-        $self->uri_json,
+        $self->uri_full_json,
     );
 }
 
-sub contents {
+sub contents_full {
     my $self = shift;
     my $opt = shift || {};
 
     my $json = $self->contents_json($opt);
+
+    return JSON->new->utf8->decode($json);
+}
+
+sub contents_manifest_json {
+    my $self = shift;
+    my $opt = shift || {};
+
+    return $self->_read_or_download(
+        $opt->{cache_file},
+        $self->uri_manifest_json,
+    );
+}
+
+sub contents_manifest {
+    my $self = shift;
+    my $opt = shift || {};
+
+    my $json = $self->contents_manifest_json($opt);
 
     return JSON->new->utf8->decode($json);
 }
