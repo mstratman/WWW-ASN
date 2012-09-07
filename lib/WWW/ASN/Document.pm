@@ -30,6 +30,10 @@ has 'adoption_date' => (
     is       => 'ro',
     required => 0,
 );
+has 'status' => (
+    is       => 'ro',
+    required => 0,
+);
 
 sub title {
     my $self = shift;
@@ -43,6 +47,11 @@ sub title {
         }
     }
     return $titles[0]->{title};
+}
+
+sub subject {
+    my $self = shift;
+    return join '; ', @{ $self->subject_names || [] };
 }
 
 =head1 NAME

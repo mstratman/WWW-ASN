@@ -177,6 +177,7 @@ sub documents {
             uri            => $id,
             jurisdiction_abbreviation => $doc->first_child('DocumentJurisdiction')->text,
             adoption_date             => $doc->first_child('LocalAdoptionDate')->text,
+            status                    => $doc->first_child('PublicationStatus')->text,
         );
     };
 
