@@ -26,7 +26,7 @@ sub _read_or_download {
         $content = $self->_get_url($url);
 
         if (defined $cache_file) {
-            write_file($cache_file, $content);
+            write_file($cache_file, { binmode => ':utf8' }, $content);
         }
     }
 
