@@ -88,7 +88,7 @@ sub contents_full {
     my $self = shift;
     my $opt = shift || {};
 
-    my $json = $self->contents_json($opt);
+    my $json = $self->contents_full_json($opt);
 
     return JSON->new->utf8->decode($json);
 }
