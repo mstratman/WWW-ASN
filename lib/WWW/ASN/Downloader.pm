@@ -1,4 +1,4 @@
-package WWW::ASN::Base;
+package WWW::ASN::Downloader;
 use strict;
 use warnings;
 use Moo;

@@ -2,7 +2,7 @@ package WWW::ASN;
 use strict;
 use warnings;
 use Moo;
-extends 'WWW::ASN::Base';
+extends 'WWW::ASN::Downloader';
 
 use XML::Twig;
 
@@ -28,18 +28,58 @@ has subjects_cache => (
 
 =head1 SYNOPSIS
 
+Without using caches:
+
     use WWW::ASN;
 
-    my $asn = WWW::ASN->new({
-        jurisdictions_cache => './jurisdictions.xml',
-    });
+    my $asn = WWW::ASN->new;
     for my $jurisdiction (@{ $asn->jurisdictions }) {
+        # $jurisdiction is a WWW::ASN::Jurisdiction object
+
         if ($jurisdictions->name =~ /Common Core/i) {
-            my @standards_docs = $jurisdictions->documents({ status => 'published' })
-            ...
+            for my $document (@{ $jurisdictions->documents({ status => 'published' }) }) {
+                # $document is a WWW::ASN::Document object
+
+                for my $standard (@{ $document->standards }) {
+                    # $standard is a WWW::ASN::Standard document
+                    print $standard->identifier, ": ", $standard->text;
+                    ...
+                    for my $sub_standard (@{ $standard->child_standards }) {
+                        ...
+                    }
+                }
+            }
         }
     }
 
+Another example, With cache files (recommended, if possible):
+
+    use WWW::ASN;
+    use URI::Escape qw(uri_escape);
+
+    my $asn = WWW::ASN->new({
+        jurisdictions_cache => 'jurisdictions.xml',
+        subjects_cache      => 'subjects.xml',
+    });
+    for my $jurisdiction (@{ $asn->jurisdictions }) {
+        my $docs_cache = 'doclist_' . $jurisdiction->abbreviation . '.xml';
+        for my $doc (@{ $jurisdictions->documents({ cache_file => $docs_cache }) }) {
+            # Set these cache values before calling standards()
+            $doc->details_cache_file(
+                "doc_" . $jurisdiction->abbreviation . '_details_' . uri_escape($doc->id)
+            );
+            $doc->manifest_cache_file(
+                "doc_" . $jurisdiction->abbreviation . '_manifest_' . uri_escape($doc->id);
+            );
+            for my $standard (@{ $document->standards }) {
+                # $standard is a WWW::ASN::Standard document
+                ...
+                for my $sub_standard (@{ $standard->child_standards }) {
+                    ...
+                }
+            }
+        }
+    }
 
 =head1 DESCRIPTION
 
@@ -50,6 +90,12 @@ As illustrated in the L</SYNOPSIS>, you will typically first
 retrieve a L<jurisdiction|WWW::ASN::Jurisdiction> such as a state,
 or other organization that creates L<standards documents|WWW::ASN::Document>.
 From this jurisdiction you can then retrieve specific documents.
+
+B<Note:> Because this is such a niche module and there aren't many expected
+users, some of the documentation may take for granted your familiarity
+with the Achievement Standards Network.
+If you have difficulties using this module, please feel free to
+contact the author with any questions
 
 =head2 Cache files
 
@@ -88,6 +134,9 @@ Leave this option undefined to force retrieval
 each time L</subjects> is called.
 
 =head1 METHODS
+
+In addition to get/set methods for each of the attributes above,
+the following methods can be called:
 
 =head2 jurisdictions
 
@@ -180,6 +229,37 @@ sub subjects {
     return \@rv;
 }
 
+=head1 TODO
+
+=over 4
+
+=item *
+
+Currently you need to start with a jurisdiction (either from calling C<jurisdictions>
+on a C<WWW::ASN> object, or by creating one with an C<abbreviation> attribute (and
+optionally other attributes), then looping its documents, then fetching their standards.
+
+Ideally the interface should give you more direct routes to get to the data you're interested in.
+
+=cut
+
+=item *
+
+When a L<document|WWW::ASN::Document> creates a L<WWW::ASN::Standard> object, it has to fetch two
+documents, the "details" xml and the "manifest" json.
+
+Ideally this would get everything from the "details" document.  We use both though, since it's
+simpler and took less time to parse the manifest than the xml.
+
+=item *
+
+Investigate the feasibility of interfacing with the SPARQL endpoint to allow
+for more powerful queries.
+
+e.g. get a list of recently updated documents.
+
+=back
+
 =head1 AUTHOR
 
 Mark A. Stratman, C<< <stratman at gmail.com> >>
@@ -189,6 +269,8 @@ Mark A. Stratman, C<< <stratman at gmail.com> >>
 L<WWW::ASN::Jurisdiction>
 
 L<WWW::ASN::Document>
+
+L<WWW::ASN::Standard>
 
 L<WWW::ASN::Subject>
 

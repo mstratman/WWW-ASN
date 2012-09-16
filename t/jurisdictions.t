@@ -36,6 +36,5 @@ my $docs = $wyoming[0]->documents({
     status => 'deprecated',
     cache_file => $docs_file,
 });
-use Data::Dumper; diag(Dumper($docs));
 
 done_testing;

@@ -2,7 +2,7 @@ package WWW::ASN::Jurisdiction;
 use strict;
 use warnings;
 use Moo;
-extends 'WWW::ASN::Base';
+extends 'WWW::ASN::Downloader';
 
 use URI;
 use XML::Twig;
@@ -120,10 +120,10 @@ Path to a file used as a cache for this search.
 The name of a file containing the XML data from
 the last time this was called with the same
 jurisdiction, subject, and status options.
-e.g.
-http://asn.jesandco.org/api/1/documents?...
 
 If the file does not exist, it will be created.
+
+See L<WWW::ASN/"Cache files"> for more details.
 
 =back
 
