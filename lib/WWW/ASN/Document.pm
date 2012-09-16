@@ -97,6 +97,8 @@ has 'id' => (
 
 Array ref of values like this: C< { language => 'en', title => 'Title goes here' } >.
 
+See also L</title> for convenience.
+
 =cut
 
 has 'titles' => (
@@ -115,6 +117,54 @@ sub title {
         }
     }
     return $titles[0]->{title};
+}
+
+=head2 description
+
+A long description of this document.
+
+=cut
+
+has 'description' => (
+    is      => 'ro',
+    lazy    => 1,
+    builder => '_build_description',
+);
+sub _build_description {
+    my $self = shift;
+    my $details = $self->details;
+
+    my $descriptions = $details->{$self->id}->{'http://purl.org/dc/terms/description'};
+    for (@$descriptions) {
+        if ($_->{lang} && $_->{lang} eq 'en-US') {
+            return $_->{value};
+        }
+    }
+    return @$descriptions ? $descriptions->[0]->{value} : '';
+}
+
+=head2 education_levels
+
+Array ref of strings, describing the education levels. e.g. [ qw(K 1 2 3) ]
+
+=cut
+
+has 'education_levels' => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build_education_levels',
+);
+
+sub _build_education_levels {
+    my $self = shift;
+    my $details = $self->details;
+
+    my $levels = $details->{$self->id}->{'http://purl.org/dc/terms/educationLevel'} || [];
+    return [
+        grep { defined }
+        map { $_->{value} =~ /([^\/]+)$/ ? $1 : undef }
+        @$levels
+    ];
 }
 
 =head2 subject_names 
@@ -185,6 +235,20 @@ sub _build_manifest {
     my $opt = shift || {};
 
     my $json = $self->manifest_file_contents;
+
+    return JSON->new->utf8->decode($json);
+}
+
+has 'details' => (
+    is       => 'ro',
+    lazy     => 1,
+    builder  => '_build_details',
+);
+sub _build_details {
+    my $self = shift;
+    my $opt = shift || {};
+
+    my $json = $self->details_file_contents;
 
     return JSON->new->utf8->decode($json);
 }
