@@ -4,7 +4,6 @@ use inc::Module::Install;
 
 name     'WWW-ASN';
 all_from 'lib/WWW/ASN.pm';
-author   q{Mark A. Stratman <stratman@gmail.com>};
 license  'perl';
 
 test_requires 'Test::More' => 0;
