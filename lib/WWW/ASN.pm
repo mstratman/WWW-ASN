@@ -36,8 +36,8 @@ Without using caches:
     for my $jurisdiction (@{ $asn->jurisdictions }) {
         # $jurisdiction is a WWW::ASN::Jurisdiction object
 
-        if ($jurisdictions->name =~ /Common Core/i) {
-            for my $document (@{ $jurisdictions->documents({ status => 'published' }) }) {
+        if ($jurisdiction->name =~ /Common Core/i) {
+            for my $document (@{ $jurisdiction->documents({ status => 'published' }) }) {
                 # $document is a WWW::ASN::Document object
 
                 for my $standard (@{ $document->standards }) {
@@ -63,7 +63,7 @@ Another example, With cache files (recommended, if possible):
     });
     for my $jurisdiction (@{ $asn->jurisdictions }) {
         my $docs_cache = 'doclist_' . $jurisdiction->abbreviation . '.xml';
-        for my $doc (@{ $jurisdictions->documents({ cache_file => $docs_cache }) }) {
+        for my $doc (@{ $jurisdiction->documents({ cache_file => $docs_cache }) }) {
             # Set these cache values before calling standards()
             $doc->details_cache_file(
                 "doc_" . $jurisdiction->abbreviation . '_details_' . uri_escape($doc->id)
